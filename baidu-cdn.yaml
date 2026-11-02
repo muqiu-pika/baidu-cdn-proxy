@@ -1,0 +1,37 @@
+mixed-port: 7890
+mode: rule
+log-level: info
+ipv6: false
+allow-lan: false
+external-controller: 127.0.0.1:9090
+
+proxies:
+  # 对应 Lua 脚本中的核心逻辑：伪装为百度 App 的 HTTP 请求
+  - name: "Baidu-CDN"
+    type: http
+    server: cloudnproxy.baidu.com # 使用百度云加速节点（解析后即等效于你的目标IP）
+    port: 443
+    headers:
+      Host: "ascdn.baidu.com"
+      Proxy-Connection: "Keep-Alive"
+      X-T5-Auth: "1951164069"
+      User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
+
+proxy-groups:
+  - name: "国内CDN加速"
+    type: select
+    proxies:
+      - Baidu-CDN
+      - DIRECT
+
+rules:
+  # 将需要加速的域名指向该 CDN 节点（放在最前面）
+  - DOMAIN-SUFFIX,baidu.com,国内CDN加速
+  - DOMAIN-SUFFIX,bdimg.com,国内CDN加速
+  - DOMAIN-SUFFIX,bdstatic.com,国内CDN加速
+  
+  # 根据你的需求，把你想要加速的其他国内域名加在这里
+  # - DOMAIN-SUFFIX,example.com,国内CDN加速
+
+  # 其他所有未命中的流量保持直连
+  - MATCH,DIRECT
