@@ -1,0 +1,46 @@
+name: Daily Resolve Baidu CDN IPs
+
+on:
+  schedule:
+    # 北京时间 05:05 = UTC 21:05（前一天）
+    - cron: "5 21 * * *"
+  workflow_dispatch: {}      # 允许在 Actions 页面手动触发测试
+
+permissions:
+  contents: write
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Resolve domain & rewrite YAML
+        env:
+          DOMAIN: cloudnproxy.baidu.com
+          YAML_FILE: baidu-cdn.yaml
+        run: python scripts/update_cdn_ips.py
+
+      - name: Commit & push if changed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No changes to baidu-cdn.yaml"
+            exit 0
+          fi
+          git add baidu-cdn.yaml
+          git commit -m "chore: update Baidu CDN resolved IPs ($(date -u +%Y-%m-%d))"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git push

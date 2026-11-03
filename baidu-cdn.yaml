@@ -6,10 +6,10 @@ allow-lan: false
 external-controller: 127.0.0.1:9090
 
 proxies:
-  # 对应 Lua 脚本中的核心逻辑：伪装为百度 App 的 HTTP 请求
-  - name: "Baidu-CDN"
+  # 智能解析：始终保留，直接使用域名（由 Clash 运行时解析，不依赖固定 IP）
+  - name: "Baidu-CDN-智能解析"
     type: http
-    server: cloudnproxy.baidu.com # 使用百度云加速节点（解析后即等效于你的目标IP）
+    server: cloudnproxy.baidu.com
     port: 443
     headers:
       Host: "ascdn.baidu.com"
@@ -17,12 +17,21 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
 
+  # >>>BAIDU-CDN-PROXIES-START>>>
+  # 以下节点由 GitHub Actions 每日解析 cloudnproxy.baidu.com 自动生成（含物理地址标注），请勿手动修改
+  # <<<BAIDU-CDN-PROXIES-END<<<
+
 proxy-groups:
   - name: "国内CDN加速"
-    type: select
+    type: url-test
+    url: "https://www.baidu.com/favicon.ico"
+    interval: 300
     proxies:
-      - Baidu-CDN
       - DIRECT
+      - Baidu-CDN-智能解析
+      # >>>BAIDU-CDN-GROUP-START>>>
+      # 以下成员由 GitHub Actions 每日自动生成（与上方 proxies 自动区一一对应）
+      # <<<BAIDU-CDN-GROUP-END<<<
 
 rules:
   # 将需要加速的域名指向该 CDN 节点（放在最前面）
