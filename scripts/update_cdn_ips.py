@@ -58,6 +58,9 @@ PROXIES_START = "# >>>BAIDU-CDN-PROXIES-START>>>"
 PROXIES_END = "# <<<BAIDU-CDN-PROXIES-END<<<"
 GROUP_START = "# >>>BAIDU-CDN-GROUP-START>>>"
 GROUP_END = "# <<<BAIDU-CDN-GROUP-END<<<"
+# 自动测速组（url-test）的成员标记，内容与 GROUP 一致，供 select 组引用
+AUTOTEST_START = "# >>>BAIDU-CDN-AUTOTEST-START>>>"
+AUTOTEST_END = "# <<<BAIDU-CDN-AUTOTEST-END<<<"
 
 # 中文物理地址对照表（用于把英文 HTTPS 兜底源的省/市翻译回中文）
 COUNTRY_MAP = {
@@ -468,9 +471,10 @@ def main() -> int:
     text = replace_block(
         text, PROXIES_START, PROXIES_END, build_proxy_nodes(enriched)
     )
-    text = replace_block(
-        text, GROUP_START, GROUP_END, build_group_members(enriched)
-    )
+    # 手动选择组（select）与自动测速组（url-test）共用同一份成员列表
+    group_members = build_group_members(enriched)
+    text = replace_block(text, GROUP_START, GROUP_END, group_members)
+    text = replace_block(text, AUTOTEST_START, AUTOTEST_END, group_members)
 
     with open(YAML_FILE, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)

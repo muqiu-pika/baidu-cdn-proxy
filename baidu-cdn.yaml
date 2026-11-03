@@ -161,11 +161,35 @@ proxies:
 # <<<BAIDU-CDN-PROXIES-END<<<
 
 proxy-groups:
-  - name: "国内CDN加速"
+  # 自动测速组（url-test）：自动选择最快节点，被下方 select 组引用
+  - name: "自动测速"
     type: url-test
     url: "https://www.baidu.com/favicon.ico"
     interval: 300
     proxies:
+      - DIRECT
+      - Baidu-CDN-智能解析
+      # >>>BAIDU-CDN-AUTOTEST-START>>>
+      - 百度-中国河北保定-联通
+      - 百度-中国河北保定-联通-2
+      - 百度-中国广东广州-未知
+      - 百度-中国江苏南京-联通
+      - 百度-中国江苏苏州-联通
+      - 百度-中国广东广州-联通
+      - 百度-中国广东广州-联通-2
+      - 百度-中国江苏南京-电信
+      - 百度-中国江苏南京-电信-2
+      - 百度-中国广东东莞-移动
+      - 百度-中国北京-电信
+      - 百度-中国北京-电信-2
+      - 百度-中国北京-电信-3
+      - 百度-中国江苏南京-移动
+      # <<<BAIDU-CDN-AUTOTEST-END<<<
+  # 手动选择组（select）：可手动指定任意节点，也可选“自动测速”走自动模式
+  - name: "国内CDN加速"
+    type: select
+    proxies:
+      - 自动测速
       - DIRECT
       - Baidu-CDN-智能解析
       # >>>BAIDU-CDN-GROUP-START>>>
@@ -183,7 +207,7 @@ proxy-groups:
       - 百度-中国北京-电信-2
       - 百度-中国北京-电信-3
       - 百度-中国江苏南京-移动
-# <<<BAIDU-CDN-GROUP-END<<<
+      # <<<BAIDU-CDN-GROUP-END<<<
 
 rules:
   # 将需要加速的域名指向该 CDN 节点（放在最前面）
