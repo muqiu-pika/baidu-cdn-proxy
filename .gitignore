@@ -1,0 +1,8 @@
+# Visual Studio / IDE
+.vs/
+*.user
+
+# Python
+__pycache__/
+*.pyc
+scripts/__pycache__/

@@ -11,8 +11,11 @@
 设计要点：
   - 每个 IP 生成一个独立节点，server 直接填 IP，Host/SNI 仍保留原域名，
     因此行为等价于「解析后的 cloudnproxy.baidu.com」。
-  - 每个节点上方用注释标注该 IP 的物理地址（国家/省/市/运营商，最佳努力查询）。
-  - 节点名形如 Baidu-CDN-01、Baidu-CDN-02…，与组成员列表一一对应。
+  - 节点名称格式为「百度-地址-运营商」，例如「百度-中国河北保定-联通」，
+    一眼即可看出物理位置；节点上方注释同时保留 IP 与完整物理地址。
+  - 地址/运营商任一项无法解析时填「未知」。
+  - 同一「地址-运营商」下若有多条 IP（必然发生），则在名称末尾追加
+    「-2」「-3」… 去重，否则 Clash 会因重名节点拒绝加载配置。
   - 标记之外的内容（顶部配置、rules、DIRECT 兜底、以及“智能解析”常驻节点）
     完全不动；智能解析节点始终直接使用域名，不会被自动生成区覆盖。
 """
@@ -75,37 +78,138 @@ def is_fake_ip(ip: str) -> bool:
     return parts[0] == FAKE_IP_PREFIX[0] and parts[1] == FAKE_IP_PREFIX[1]
 
 
-def _fmt_ipwho(data: dict) -> str:
+def shorten_isp(isp: str) -> str:
+    """把运营商字段归一为简短可读形式（中文优先，无法识别填“未知”）。"""
+    if not isp:
+        return "未知"
+    s = isp
+    # 中文优先
+    if "联通" in s:
+        return "联通"
+    if "电信" in s:
+        return "电信"
+    if "移动" in s:
+        return "移动"
+    # 英文兜底，统一转中文
+    if "Unicom" in s:
+        return "联通"
+    if "Telecom" in s:
+        return "电信"
+    if "Mobile" in s:
+        return "移动"
+    # 既不是三大运营商也无法识别 → 视为未知
+    return "未知"
+
+
+def make_address(country: str, region: str, city: str) -> str:
+    """由 GeoIP 字段拼出写入节点名的简短物理地址（国家+省+市，去“省市”后缀）。"""
+    region_s = (region or "").replace("省", "").replace("市", "")
+    city_s = (city or "").replace("市", "").replace("省", "")
+    parts = [p for p in [country, region_s, city_s] if p]
+    return "".join(parts) or "未知"
+
+
+def make_node_names(enriched: list) -> list:
+    """返回与 enriched 等长的节点名列表。
+
+    格式「百度-地址-运营商」；地址/运营商未知填「未知」。
+    同一「地址-运营商」下若有多条 IP（必然发生），在名称末尾追加
+    「-2」「-3」… 去重，避免 Clash 因重名节点拒绝加载。
+    """
+    base_names = []
+    for (_ip, _raw, address, isp) in enriched:
+        address_s = address if address and address != "未知" else "未知"
+        isp_s = isp if isp and isp != "未知" else "未知"
+        base_names.append(f"百度-{address_s}-{isp_s}")
+
+    final = []
+    seen = {}
+    for name in base_names:
+        if name in seen:
+            seen[name] += 1
+            final.append(f"{name}-{seen[name]}")
+        else:
+            seen[name] = 1
+            final.append(name)
+    return final
+
+
+def _fmt_ipapi(data: dict):
+    """ip-api.com（lang=zh-CN）结果 → (raw, address, isp)；失败返回 None。"""
+    if data.get("status") != "success":
+        return None
+    raw = " · ".join(
+        p
+        for p in [
+            data.get("country"),
+            data.get("regionName"),
+            data.get("city"),
+            data.get("isp"),
+        ]
+        if p
+    )
+    address = make_address(
+        data.get("country"), data.get("regionName"), data.get("city")
+    )
+    isp = shorten_isp(data.get("isp"))
+    return (raw, address, isp)
+
+
+def _fmt_ipwho(data: dict):
+    """ipwho.is 结果 → (raw, address, isp)；失败返回 None。"""
     if not data.get("success"):
-        return ""
-    parts = [
-        data.get("country"),
-        data.get("region"),
-        data.get("city"),
-        (data.get("connection") or {}).get("isp"),
-    ]
-    return " · ".join(p for p in parts if p)
+        return None
+    raw = " · ".join(
+        p
+        for p in [
+            data.get("country"),
+            data.get("region"),
+            data.get("city"),
+            (data.get("connection") or {}).get("isp"),
+        ]
+        if p
+    )
+    address = make_address(
+        data.get("country"), data.get("region"), data.get("city")
+    )
+    isp = shorten_isp((data.get("connection") or {}).get("isp"))
+    return (raw, address, isp)
 
 
-def _fmt_ipinfo(data: dict) -> str:
+def _fmt_ipinfo(data: dict):
+    """ipinfo.io 结果 → (raw, address, isp)；失败返回 None。"""
     if data.get("bogon") or data.get("error"):
-        return ""
-    parts = [
-        data.get("country"),
-        data.get("region"),
-        data.get("city"),
-        data.get("org"),
-    ]
-    return " · ".join(p for p in parts if p)
+        return None
+    raw = " · ".join(
+        p
+        for p in [
+            data.get("country"),
+            data.get("region"),
+            data.get("city"),
+            data.get("org"),
+        ]
+        if p
+    )
+    address = make_address(data.get("country"), data.get("region"), data.get("city"))
+    isp = shorten_isp(data.get("org"))
+    return (raw, address, isp)
 
 
-def geo_lookup(ip: str) -> str:
-    """查询 IP 的物理位置（国家/省/市/运营商）。最佳努力，失败返回空串。
+def geo_lookup(ip: str):
+    """查询 IP 的物理位置，返回 (raw, address, isp)。
 
-    依次尝试 ipwho.is（HTTPS 免 key）与 ipinfo.io；任一成功即用其结果。
-    仅用于注释标注，任何失败都不应阻断整体更新。
+    raw     完整物理地址（用于节点上方注释）；
+    address 简短物理地址（用于节点名称「百度-地址-运营商」的前半）；
+    isp     归一后的运营商（用于节点名称后半，无法识别为“未知”）。
+    依次尝试 ip-api.com（中文）与 ipwho.is / ipinfo.io（英文兜底），
+    仅用于标注，任何失败都不应阻断整体更新。
     """
     endpoints = [
+        (
+            f"http://ip-api.com/json/{ip}?lang=zh-CN"
+            f"&fields=country,regionName,city,isp",
+            _fmt_ipapi,
+        ),
         (f"https://ipwho.is/{ip}", _fmt_ipwho),
         (f"https://ipinfo.io/{ip}/json", _fmt_ipinfo),
     ]
@@ -116,39 +220,45 @@ def geo_lookup(ip: str) -> str:
             )
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read().decode("utf-8", "replace"))
-            loc = fmt(data)
-            if loc:
-                return loc
+            res = fmt(data)
+            if res:
+                return res
         except Exception as e:
             print(f"[warn] geo lookup 失败 {ip} ({url}): {e}")
             continue
-    return ""
+    return ("", "未知", "未知")
 
 
-def build_proxy_nodes(ips: list) -> str:
+def enrich(ips: list) -> list:
+    """为每个 IP 附加 (ip, raw, address, isp)，并对 GeoIP 做礼貌性限速。"""
+    result = []
+    for ip in ips:
+        raw, address, isp = geo_lookup(ip)
+        result.append((ip, raw, address, isp))
+        time.sleep(0.3)
+    return result
+
+
+def build_proxy_nodes(enriched: list) -> str:
+    names = make_node_names(enriched)
     lines = []
-    for idx, ip in enumerate(ips, 1):
-        # 物理地址标注（最佳努力）
-        loc = geo_lookup(ip)
-        tag = f"{ip}  {loc}" if loc else ip
+    for (ip, raw, _address, _isp), name in zip(enriched, names):
+        # 节点上方注释保留 IP 与完整物理地址
+        tag = f"{ip}  {raw}" if raw else ip
         lines.append(f"  # {tag}")
-        name = f"Baidu-CDN-{idx:02d}"
+        # 节点名称：百度-地址-运营商
         lines.append(f'  - name: "{name}"')
         lines.append("    type: http")
         lines.append(f"    server: {ip}")
         lines.append("    port: 443")
         lines.append("    headers:")
         lines.extend(HEADERS)
-        # 礼貌地稍作停顿，避免触发 GeoIP 服务的速率限制
-        time.sleep(0.3)
     return "\n".join(lines)
 
 
-def build_group_members(ips: list) -> str:
-    lines = []
-    for idx, _ in enumerate(ips, 1):
-        name = f"Baidu-CDN-{idx:02d}"
-        lines.append(f"      - {name}")
+def build_group_members(enriched: list) -> str:
+    names = make_node_names(enriched)
+    lines = [f"      - {name}" for name in names]
     return "\n".join(lines)
 
 
@@ -178,7 +288,11 @@ def main() -> int:
         return 0
 
     ips = real_ips
-    print(f"[info] 解析到 {len(ips)} 个真实 IP ({DOMAIN}): {ips}")
+    print(f"[info] 解析到 {len(ips)} 个真实 IP ({DOMAIN})")
+
+    enriched = enrich(ips)
+    for (ip, raw, address, isp), name in zip(enriched, make_node_names(enriched)):
+        print(f"[info]   {ip}  {raw}  -> 节点名: {name}")
 
     if not os.path.exists(YAML_FILE):
         print(f"[error] 找不到 YAML 文件: {YAML_FILE}")
@@ -188,10 +302,10 @@ def main() -> int:
         text = f.read()
 
     text = replace_block(
-        text, PROXIES_START, PROXIES_END, build_proxy_nodes(ips)
+        text, PROXIES_START, PROXIES_END, build_proxy_nodes(enriched)
     )
     text = replace_block(
-        text, GROUP_START, GROUP_END, build_group_members(ips)
+        text, GROUP_START, GROUP_END, build_group_members(enriched)
     )
 
     with open(YAML_FILE, "w", encoding="utf-8", newline="\n") as f:
