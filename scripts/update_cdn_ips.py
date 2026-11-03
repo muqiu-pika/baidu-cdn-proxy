@@ -16,6 +16,10 @@
   - 地址/运营商任一项无法解析时填「未知」。
   - 同一「地址-运营商」下若有多条 IP（必然发生），则在名称末尾追加
     「-2」「-3」… 去重，否则 Clash 会因重名节点拒绝加载配置。
+  - 物理地址“只用中文”：优先 pconline（原生中文）/ ip-api(lang=zh-CN)；
+    若运行环境（如 GitHub Actions 共享 IP）无法访问这些 HTTP 源而回退到
+    英文 HTTPS 源（ipwho.is / ipinfo.io），也会通过内置中英文对照表把
+    省/市翻译回中文，保证节点名不出现英文地名。
   - 标记之外的内容（顶部配置、rules、DIRECT 兜底、以及“智能解析”常驻节点）
     完全不动；智能解析节点始终直接使用域名，不会被自动生成区覆盖。
 """
@@ -52,6 +56,65 @@ PROXIES_END = "# <<<BAIDU-CDN-PROXIES-END<<<"
 GROUP_START = "# >>>BAIDU-CDN-GROUP-START>>>"
 GROUP_END = "# <<<BAIDU-CDN-GROUP-END<<<"
 
+# 中文物理地址对照表（用于把英文 HTTPS 兜底源的省/市翻译回中文）
+COUNTRY_MAP = {
+    "China": "中国",
+    "中国": "中国",
+    "Hong Kong": "中国香港",
+    "Macao": "中国澳门",
+    "Macau": "中国澳门",
+    "Taiwan": "中国台湾",
+}
+
+PROVINCE_MAP = {
+    "Hebei": "河北", "Hebei Sheng": "河北",
+    "Guangdong": "广东", "Guangdong Sheng": "广东",
+    "Jiangsu": "江苏", "Jiangsu Sheng": "江苏",
+    "Beijing": "北京", "Beijing Shi": "北京",
+    "Shanghai": "上海", "Shanghai Shi": "上海",
+    "Tianjin": "天津", "Chongqing": "重庆",
+    "Zhejiang": "浙江", "Shandong": "山东", "Sichuan": "四川",
+    "Henan": "河南", "Hubei": "湖北", "Hunan": "湖南",
+    "Fujian": "福建", "Liaoning": "辽宁", "Jilin": "吉林",
+    "Heilongjiang": "黑龙江", "Anhui": "安徽", "Jiangxi": "江西",
+    "Guizhou": "贵州", "Yunnan": "云南", "Gansu": "甘肃",
+    "Hainan": "海南", "Shanxi": "山西", "Shaanxi": "陕西",
+    "Qinghai": "青海", "Taiwan": "台湾", "Xinjiang": "新疆",
+    "Tibet": "西藏", "Ningxia": "宁夏",
+    "Inner Mongolia": "内蒙古", "Nei Mongol": "内蒙古",
+    "Guangxi": "广西", "Hong Kong": "香港", "Macao": "澳门",
+}
+
+CITY_MAP = {
+    "Baoding": "保定", "Guangzhou": "广州", "Nanjing": "南京",
+    "Suzhou": "苏州", "Dongguan": "东莞", "Beijing": "北京",
+    "Shanghai": "上海", "Chengde": "承德", "Chengdu": "成都",
+    "Hangzhou": "杭州", "Shenzhen": "深圳", "Wuhan": "武汉",
+    "Xian": "西安", "Xi'an": "西安", "Xiamen": "厦门",
+    "Tianjin": "天津", "Chongqing": "重庆", "Qingdao": "青岛",
+    "Jinan": "济南", "Zhengzhou": "郑州", "Changsha": "长沙",
+    "Harbin": "哈尔滨", "Shenyang": "沈阳", "Dalian": "大连",
+    "Kunming": "昆明", "Guiyang": "贵阳", "Lanzhou": "兰州",
+    "Taiyuan": "太原", "Hefei": "合肥", "Nanchang": "南昌",
+    "Fuzhou": "福州", "Nanning": "南宁", "Urumqi": "乌鲁木齐",
+    "Lhasa": "拉萨", "Yinchuan": "银川", "Xining": "西宁",
+    "Haikou": "海口", "Sanya": "三亚",
+}
+
+
+def _norm(s: str) -> str:
+    """去掉省/市/英文行政后缀，便于对照表匹配。"""
+    return (
+        (s or "")
+        .replace("省", "")
+        .replace("市", "")
+        .replace("Shi", "")
+        .replace("Sheng", "")
+        .replace("Province", "")
+        .replace("Municipality", "")
+        .strip()
+    )
+
 
 def resolve_ips(domain: str, attempts: int = 20) -> list:
     """通过重复查询收集 round-robin 返回的 A 记录 IP，去重排序。"""
@@ -79,33 +142,34 @@ def is_fake_ip(ip: str) -> bool:
 
 
 def shorten_isp(isp: str) -> str:
-    """把运营商字段归一为简短可读形式（中文优先，无法识别填“未知”）。"""
+    """把运营商字段归一为简短中文（联通/电信/移动），大小写不敏感；无法识别填“未知”。"""
     if not isp:
         return "未知"
-    s = isp
-    # 中文优先
-    if "联通" in s:
+    s = isp.lower()
+    if "联通" in isp or "unicom" in s:
         return "联通"
-    if "电信" in s:
+    if "电信" in isp or "telecom" in s:
         return "电信"
-    if "移动" in s:
+    if "移动" in isp or "mobile" in s:
         return "移动"
-    # 英文兜底，统一转中文
-    if "Unicom" in s:
-        return "联通"
-    if "Telecom" in s:
-        return "电信"
-    if "Mobile" in s:
-        return "移动"
-    # 既不是三大运营商也无法识别 → 视为未知
+    if "铁通" in isp:
+        return "铁通"
     return "未知"
 
 
 def make_address(country: str, region: str, city: str) -> str:
-    """由 GeoIP 字段拼出写入节点名的简短物理地址（国家+省+市，去“省市”后缀）。"""
-    region_s = (region or "").replace("省", "").replace("市", "")
-    city_s = (city or "").replace("市", "").replace("省", "")
-    parts = [p for p in [country, region_s, city_s] if p]
+    """由 GeoIP 字段拼出写入节点名的简短物理地址（国家+省+市），强制中文。
+
+    英文省/市会通过内置对照表翻译回中文；直辖市/自治区做去重
+    （如“北京”+“北京市” → “中国北京”而非“中国北京北京”）。
+    """
+    country_s = COUNTRY_MAP.get((country or "").strip(), (country or "").strip())
+    region_s = PROVINCE_MAP.get(_norm(region), _norm(region))
+    city_s = CITY_MAP.get(_norm(city), _norm(city))
+    # 直辖市/自治区去重：城市若以省份名开头则去掉省份部分
+    if region_s and city_s.startswith(region_s):
+        city_s = city_s[len(region_s):]
+    parts = [p for p in [country_s, region_s, city_s] if p]
     return "".join(parts) or "未知"
 
 
@@ -132,6 +196,36 @@ def make_node_names(enriched: list) -> list:
             seen[name] = 1
             final.append(name)
     return final
+
+
+def _fmt_pconline(ip: str):
+    """pconline（原生中文，GBK 编码）结果 → (raw, address, isp)；失败返回 None。"""
+    url = f"https://whois.pconline.com.cn/ipJson.jsp?ip={ip}&json=true"
+    try:
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            raw_bytes = resp.read()
+        data = json.loads(raw_bytes.decode("gbk", "replace"))
+    except Exception as e:
+        print(f"[warn] pconline 失败 {ip}: {e}")
+        return None
+    if not data or data.get("err") or not data.get("pro"):
+        return None
+    pro = data.get("pro", "") or ""
+    city = data.get("city", "") or ""
+    addr = (data.get("addr") or f"{pro}{city}").strip()
+    # 运营商：addr 去掉“省份+城市”之后的剩余部分
+    isp_raw = addr
+    if pro and pro in isp_raw:
+        isp_raw = isp_raw.replace(pro, "")
+    if city and city in isp_raw:
+        isp_raw = isp_raw.replace(city, "")
+    isp_raw = isp_raw.strip("  -·")
+    address = make_address("中国", pro, city)
+    isp = shorten_isp(isp_raw)
+    return (addr or f"{pro}{city}", address, isp)
 
 
 def _fmt_ipapi(data: dict):
@@ -195,37 +289,40 @@ def _fmt_ipinfo(data: dict):
     return (raw, address, isp)
 
 
+# HTTP(中文) 源是否整体不可用；首个 IP 若两个 HTTP 源都失败则置 True，
+# 后续 IP 直接走 HTTPS 兜底，避免每次都白等超时。
+_http_dead = False
+
+
 def geo_lookup(ip: str):
     """查询 IP 的物理位置，返回 (raw, address, isp)。
 
     raw     完整物理地址（用于节点上方注释）；
-    address 简短物理地址（用于节点名称「百度-地址-运营商」的前半）；
+    address 简短中文物理地址（用于节点名称「百度-地址-运营商」的前半）；
     isp     归一后的运营商（用于节点名称后半，无法识别为“未知”）。
-    依次尝试 ip-api.com（中文）与 ipwho.is / ipinfo.io（英文兜底），
-    仅用于标注，任何失败都不应阻断整体更新。
+    优先中文源（pconline / ip-api(lang=zh-CN)，均为 HTTP）；
+    若运行环境访问不到 HTTP（如 GitHub 共享 IP 被限），回退到英文 HTTPS 源，
+    并通过内置对照表把省/市翻译回中文，保证节点名不出现英文地名。
     """
-    endpoints = [
-        (
-            f"http://ip-api.com/json/{ip}?lang=zh-CN"
-            f"&fields=country,regionName,city,isp",
-            _fmt_ipapi,
-        ),
-        (f"https://ipwho.is/{ip}", _fmt_ipwho),
-        (f"https://ipinfo.io/{ip}/json", _fmt_ipinfo),
-    ]
-    for url, fmt in endpoints:
+    global _http_dead
+    if not _http_dead:
+        for fetcher in (_fmt_pconline, _fmt_ipapi):
+            try:
+                res = fetcher(ip)
+                if res:
+                    return res
+            except Exception as e:
+                print(f"[warn] geo lookup 失败 {ip} ({fetcher.__name__}): {e}")
+        # 两个 HTTP 中文源都失败 → 标记，后续 IP 不再尝试 HTTP
+        _http_dead = True
+
+    for fetcher in (_fmt_ipwho, _fmt_ipinfo):
         try:
-            req = urllib.request.Request(
-                url, headers={"User-Agent": "Mozilla/5.0"}
-            )
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                data = json.loads(resp.read().decode("utf-8", "replace"))
-            res = fmt(data)
+            res = fetcher(ip)
             if res:
                 return res
         except Exception as e:
-            print(f"[warn] geo lookup 失败 {ip} ({url}): {e}")
-            continue
+            print(f"[warn] geo lookup 失败 {ip} ({fetcher.__name__}): {e}")
     return ("", "未知", "未知")
 
 
