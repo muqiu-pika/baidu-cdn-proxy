@@ -19,7 +19,7 @@ proxies:
 
   # >>>BAIDU-CDN-PROXIES-START>>>
   # 110.242.70.68  China · Hebei Sheng · Baoding · CHINA UNICOM China169 Backbone
-  - name: "Baidu-CDN-01"
+  - name: "百度-ChinaHebei ShengBaoding-未知"
     type: http
     server: 110.242.70.68
     port: 443
@@ -29,7 +29,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 110.242.70.69  China · Hebei Sheng · Baoding · CHINA UNICOM China169 Backbone
-  - name: "Baidu-CDN-02"
+  - name: "百度-ChinaHebei ShengBaoding-未知-2"
     type: http
     server: 110.242.70.69
     port: 443
@@ -39,7 +39,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 14.215.182.75  China · Guangdong Sheng · Guangzhou · No.31,Jin-rong Street
-  - name: "Baidu-CDN-03"
+  - name: "百度-ChinaGuangdong ShengGuangzhou-未知"
     type: http
     server: 14.215.182.75
     port: 443
@@ -49,7 +49,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 153.3.237.117  China · Jiangsu Sheng · Nanjing · CHINA UNICOM China169 Backbone
-  - name: "Baidu-CDN-04"
+  - name: "百度-ChinaJiangsu ShengNanjing-未知"
     type: http
     server: 153.3.237.117
     port: 443
@@ -59,7 +59,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 157.0.146.158  China · Jiangsu Sheng · Suzhou · China Unicom
-  - name: "Baidu-CDN-05"
+  - name: "百度-ChinaJiangsu ShengSuzhou-联通"
     type: http
     server: 157.0.146.158
     port: 443
@@ -69,7 +69,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 163.177.17.189  China · Guangdong Sheng · Guangzhou · China Unicom Guangdong IP network
-  - name: "Baidu-CDN-06"
+  - name: "百度-ChinaGuangdong ShengGuangzhou-联通"
     type: http
     server: 163.177.17.189
     port: 443
@@ -79,7 +79,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 163.177.17.6  China · Guangdong Sheng · Guangzhou · China Unicom Guangdong IP network
-  - name: "Baidu-CDN-07"
+  - name: "百度-ChinaGuangdong ShengGuangzhou-联通-2"
     type: http
     server: 163.177.17.6
     port: 443
@@ -89,7 +89,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 180.101.50.208  China · Jiangsu Sheng · Nanjing · China Telecom
-  - name: "Baidu-CDN-08"
+  - name: "百度-ChinaJiangsu ShengNanjing-电信"
     type: http
     server: 180.101.50.208
     port: 443
@@ -99,7 +99,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 180.101.50.249  China · Jiangsu Sheng · Nanjing · China Telecom
-  - name: "Baidu-CDN-09"
+  - name: "百度-ChinaJiangsu ShengNanjing-电信-2"
     type: http
     server: 180.101.50.249
     port: 443
@@ -109,7 +109,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 183.240.98.84  China · Guangdong Sheng · Dongguan · China Mobile Communications Corporation
-  - name: "Baidu-CDN-10"
+  - name: "百度-ChinaGuangdong ShengDongguan-移动"
     type: http
     server: 183.240.98.84
     port: 443
@@ -119,7 +119,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 220.181.111.189  China · Beijing · Beijing · IDC, China Telecommunications Corporation
-  - name: "Baidu-CDN-11"
+  - name: "百度-ChinaBeijingBeijing-电信"
     type: http
     server: 220.181.111.189
     port: 443
@@ -129,7 +129,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 220.181.33.174  China · Beijing · Beijing · IDC, China Telecommunications Corporation
-  - name: "Baidu-CDN-12"
+  - name: "百度-ChinaBeijingBeijing-电信-2"
     type: http
     server: 220.181.33.174
     port: 443
@@ -139,7 +139,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 220.181.7.1  China · Beijing · Beijing · IDC, China Telecommunications Corporation
-  - name: "Baidu-CDN-13"
+  - name: "百度-ChinaBeijingBeijing-电信-3"
     type: http
     server: 220.181.7.1
     port: 443
@@ -149,7 +149,7 @@ proxies:
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
   # 36.155.169.188  China · Jiangsu Sheng · Nanjing · China Mobile Communications Corporation
-  - name: "Baidu-CDN-14"
+  - name: "百度-ChinaJiangsu ShengNanjing-移动"
     type: http
     server: 36.155.169.188
     port: 443
@@ -169,20 +169,20 @@ proxy-groups:
       - DIRECT
       - Baidu-CDN-智能解析
       # >>>BAIDU-CDN-GROUP-START>>>
-      - Baidu-CDN-01
-      - Baidu-CDN-02
-      - Baidu-CDN-03
-      - Baidu-CDN-04
-      - Baidu-CDN-05
-      - Baidu-CDN-06
-      - Baidu-CDN-07
-      - Baidu-CDN-08
-      - Baidu-CDN-09
-      - Baidu-CDN-10
-      - Baidu-CDN-11
-      - Baidu-CDN-12
-      - Baidu-CDN-13
-      - Baidu-CDN-14
+      - 百度-ChinaHebei ShengBaoding-未知
+      - 百度-ChinaHebei ShengBaoding-未知-2
+      - 百度-ChinaGuangdong ShengGuangzhou-未知
+      - 百度-ChinaJiangsu ShengNanjing-未知
+      - 百度-ChinaJiangsu ShengSuzhou-联通
+      - 百度-ChinaGuangdong ShengGuangzhou-联通
+      - 百度-ChinaGuangdong ShengGuangzhou-联通-2
+      - 百度-ChinaJiangsu ShengNanjing-电信
+      - 百度-ChinaJiangsu ShengNanjing-电信-2
+      - 百度-ChinaGuangdong ShengDongguan-移动
+      - 百度-ChinaBeijingBeijing-电信
+      - 百度-ChinaBeijingBeijing-电信-2
+      - 百度-ChinaBeijingBeijing-电信-3
+      - 百度-ChinaJiangsu ShengNanjing-移动
 # <<<BAIDU-CDN-GROUP-END<<<
 
 rules:
