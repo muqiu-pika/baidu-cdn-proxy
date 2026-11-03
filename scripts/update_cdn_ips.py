@@ -17,9 +17,12 @@
   - 同一「地址-运营商」下若有多条 IP（必然发生），则在名称末尾追加
     「-2」「-3」… 去重，否则 Clash 会因重名节点拒绝加载配置。
   - 物理地址“只用中文”：优先 pconline（原生中文）/ ip-api(lang=zh-CN)；
-    若运行环境（如 GitHub Actions 共享 IP）无法访问这些 HTTP 源而回退到
-    英文 HTTPS 源（ipwho.is / ipinfo.io），也会通过内置中英文对照表把
-    省/市翻译回中文，保证节点名不出现英文地名。
+    若运行环境（如 GitHub Actions 共享 IP）被某源限流，则回退到其它英文
+    HTTPS 源（ipwho.is / ipapi.co / ipwhois.app / ipinfo.io），并通过内置
+    中英文对照表把省/市翻译回中文，保证节点名不出现英文地名。
+  - 多源兜底 + 限流熔断：维护一组 GeoIP 源，逐个尝试；某源连续失败达到阈值
+    即在本批次内“熔断”跳过，避免对限流源反复请求而整体失败（这正是
+    GitHub 共享 IP 上单源易被“请求过多”拒绝的根因）。
   - 标记之外的内容（顶部配置、rules、DIRECT 兜底、以及“智能解析”常驻节点）
     完全不动；智能解析节点始终直接使用域名，不会被自动生成区覆盖。
 """
@@ -198,6 +201,13 @@ def make_node_names(enriched: list) -> list:
     return final
 
 
+def _fetch_json(url: str, timeout: int = 5):
+    """通用 JSON 拉取；HTTP 429/限流直接抛错，交由上层熔断处理。"""
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8", "replace"))
+
+
 def _fmt_pconline(ip: str):
     """pconline（原生中文，GBK 编码）结果 → (raw, address, isp)；失败返回 None。"""
     url = f"https://whois.pconline.com.cn/ipJson.jsp?ip={ip}&json=true"
@@ -270,6 +280,46 @@ def _fmt_ipwho(data: dict):
     return (raw, address, isp)
 
 
+def _fmt_ipapico(data: dict):
+    """ipapi.co 结果 → (raw, address, isp)；失败/限流返回 None。"""
+    if data.get("error") or data.get("message"):
+        return None
+    raw = " · ".join(
+        p
+        for p in [
+            data.get("country_name"),
+            data.get("region"),
+            data.get("city"),
+            data.get("org"),
+        ]
+        if p
+    )
+    address = make_address(
+        data.get("country_name"), data.get("region"), data.get("city")
+    )
+    isp = shorten_isp(data.get("org"))
+    return (raw, address, isp)
+
+
+def _fmt_ipwhoisapp(data: dict):
+    """ipwhois.app 结果 → (raw, address, isp)；失败返回 None。"""
+    if not data.get("success"):
+        return None
+    raw = " · ".join(
+        p
+        for p in [
+            data.get("country"),
+            data.get("region"),
+            data.get("city"),
+            data.get("isp") or data.get("org"),
+        ]
+        if p
+    )
+    address = make_address(data.get("country"), data.get("region"), data.get("city"))
+    isp = shorten_isp(data.get("isp") or data.get("org"))
+    return (raw, address, isp)
+
+
 def _fmt_ipinfo(data: dict):
     """ipinfo.io 结果 → (raw, address, isp)；失败返回 None。"""
     if data.get("bogon") or data.get("error"):
@@ -289,9 +339,26 @@ def _fmt_ipinfo(data: dict):
     return (raw, address, isp)
 
 
-# HTTP(中文) 源是否整体不可用；首个 IP 若两个 HTTP 源都失败则置 True，
-# 后续 IP 直接走 HTTPS 兜底，避免每次都白等超时。
-_http_dead = False
+# GeoIP 源池：中文优先，英文源兜底；每项 (名称, 解析函数, URL模板)
+PROVIDERS = [
+    ("pconline", lambda ip: _fmt_pconline(ip),
+     "https://whois.pconline.com.cn/ipJson.jsp?ip={ip}&json=true"),
+    ("ipapi", lambda ip: _fmt_ipapi(
+        _fetch_json(f"http://ip-api.com/json/{ip}?lang=zh-CN&fields=country,regionName,city,isp")),
+     "http://ip-api.com/json/{ip}?lang=zh-CN"),
+    ("ipwho", lambda ip: _fmt_ipwho(_fetch_json(f"https://ipwho.is/{ip}")),
+     "https://ipwho.is/{ip}"),
+    ("ipapico", lambda ip: _fmt_ipapico(_fetch_json(f"https://ipapi.co/{ip}/json/")),
+     "https://ipapi.co/{ip}/json/"),
+    ("ipwhoisapp", lambda ip: _fmt_ipwhoisapp(_fetch_json(f"https://ipwhois.app/json/{ip}")),
+     "https://ipwhois.app/json/{ip}"),
+    ("ipinfo", lambda ip: _fmt_ipinfo(_fetch_json(f"https://ipinfo.io/{ip}/json")),
+     "https://ipinfo.io/{ip}/json"),
+]
+
+# 各源连续失败计数；达到阈值即本批次熔断跳过，避免对限流源反复请求
+_PROVIDER_FAIL = {}
+_PROVIDER_FAIL_LIMIT = 2
 
 
 def geo_lookup(ip: str):
@@ -300,30 +367,30 @@ def geo_lookup(ip: str):
     raw     完整物理地址（用于节点上方注释）；
     address 简短中文物理地址（用于节点名称「百度-地址-运营商」的前半）；
     isp     归一后的运营商（用于节点名称后半，无法识别为“未知”）。
-    优先中文源（pconline / ip-api(lang=zh-CN)，均为 HTTP）；
-    若运行环境访问不到 HTTP（如 GitHub 共享 IP 被限），回退到英文 HTTPS 源，
-    并通过内置对照表把省/市翻译回中文，保证节点名不出现英文地名。
+    依次尝试 PROVIDERS 中的多个源（中文优先，英文源翻译兜底）；
+    某源连续失败达到阈值即熔断，本批次后续 IP 不再请求该源，
+    从而把请求分散到可用源、规避“请求过多”导致的整体失败。
     """
-    global _http_dead
-    if not _http_dead:
-        for fetcher in (_fmt_pconline, _fmt_ipapi):
-            try:
-                res = fetcher(ip)
-                if res:
-                    return res
-            except Exception as e:
-                print(f"[warn] geo lookup 失败 {ip} ({fetcher.__name__}): {e}")
-        # 两个 HTTP 中文源都失败 → 标记，后续 IP 不再尝试 HTTP
-        _http_dead = True
-
-    for fetcher in (_fmt_ipwho, _fmt_ipinfo):
+    result = ("", "未知", "未知")
+    for name, fetcher, _url in PROVIDERS:
+        if _PROVIDER_FAIL.get(name, 0) >= _PROVIDER_FAIL_LIMIT:
+            continue  # 该源已熔断，跳过以省请求
         try:
             res = fetcher(ip)
-            if res:
-                return res
+        except urllib.error.HTTPError as e:
+            print(f"[warn] geo lookup 限流/错误 {ip} ({name}): HTTP {e.code}")
+            res = None
         except Exception as e:
-            print(f"[warn] geo lookup 失败 {ip} ({fetcher.__name__}): {e}")
-    return ("", "未知", "未知")
+            print(f"[warn] geo lookup 异常 {ip} ({name}): {e}")
+            res = None
+        if res:
+            _PROVIDER_FAIL[name] = 0  # 成功则重置熔断计数
+            return res
+        # 失败计数
+        _PROVIDER_FAIL[name] = _PROVIDER_FAIL.get(name, 0) + 1
+        if _PROVIDER_FAIL[name] >= _PROVIDER_FAIL_LIMIT:
+            print(f"[warn] {name} 连续失败 {_PROVIDER_FAIL_LIMIT} 次，本批次后续跳过（避免限流）")
+    return result
 
 
 def enrich(ips: list) -> list:
