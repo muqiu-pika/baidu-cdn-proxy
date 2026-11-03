@@ -38,8 +38,8 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 14.215.182.75  China · Guangdong Sheng · Guangzhou · No.31,Jin-rong Street
-  - name: "百度-中国广东广州-未知"
+  # 14.215.182.75  广东省广州市 电信
+  - name: "百度-中国广东广州-电信"
     type: http
     server: 14.215.182.75
     port: 443
@@ -48,7 +48,7 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 153.3.237.117  China · Jiangsu Sheng · Nanjing · CHINA UNICOM China169 Backbone
+  # 153.3.237.117  江苏省南京市 联通
   - name: "百度-中国江苏南京-联通"
     type: http
     server: 153.3.237.117
@@ -68,7 +68,7 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 163.177.17.189  China · Guangdong Sheng · Guangzhou · China Unicom Guangdong IP network
+  # 163.177.17.189  广东省广州市 联通
   - name: "百度-中国广东广州-联通"
     type: http
     server: 163.177.17.189
@@ -172,7 +172,7 @@ proxy-groups:
       # >>>BAIDU-CDN-AUTOTEST-START>>>
       - 百度-中国河北保定-联通
       - 百度-中国河北保定-联通-2
-      - 百度-中国广东广州-未知
+      - 百度-中国广东广州-电信
       - 百度-中国江苏南京-联通
       - 百度-中国江苏苏州-联通
       - 百度-中国广东广州-联通
@@ -184,7 +184,7 @@ proxy-groups:
       - 百度-中国北京-电信-2
       - 百度-中国北京-电信-3
       - 百度-中国江苏南京-移动
-      # <<<BAIDU-CDN-AUTOTEST-END<<<
+# <<<BAIDU-CDN-AUTOTEST-END<<<
   # 手动选择组（select）：可手动指定任意节点，也可选“自动测速”走自动模式
   - name: "国内CDN加速"
     type: select
@@ -195,7 +195,7 @@ proxy-groups:
       # >>>BAIDU-CDN-GROUP-START>>>
       - 百度-中国河北保定-联通
       - 百度-中国河北保定-联通-2
-      - 百度-中国广东广州-未知
+      - 百度-中国广东广州-电信
       - 百度-中国江苏南京-联通
       - 百度-中国江苏苏州-联通
       - 百度-中国广东广州-联通
@@ -207,7 +207,7 @@ proxy-groups:
       - 百度-中国北京-电信-2
       - 百度-中国北京-电信-3
       - 百度-中国江苏南京-移动
-      # <<<BAIDU-CDN-GROUP-END<<<
+# <<<BAIDU-CDN-GROUP-END<<<
 
 rules:
   # 将需要加速的域名指向该 CDN 节点（放在最前面）
