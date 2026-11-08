@@ -38,8 +38,8 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 14.215.182.75  China · Guangdong Sheng · Guangzhou · No.31,Jin-rong Street
-  - name: "百度-中国广东广州-未知"
+  # 14.215.182.75  广东省广州市 电信
+  - name: "百度-中国广东广州-电信"
     type: http
     server: 14.215.182.75
     port: 443
@@ -68,7 +68,7 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 163.177.17.189  广东省广州市 联通
+  # 163.177.17.189  China · Guangdong Sheng · Guangzhou · China Unicom Guangdong IP network
   - name: "百度-中国广东广州-联通"
     type: http
     server: 163.177.17.189
@@ -78,7 +78,7 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 163.177.17.6  China · Guangdong Sheng · Guangzhou · China Unicom Guangdong IP network
+  # 163.177.17.6  广东省广州市 联通
   - name: "百度-中国广东广州-联通-2"
     type: http
     server: 163.177.17.6
@@ -108,8 +108,8 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 183.240.98.84  China · Guangdong Sheng · Dongguan · China Mobile Communications Corporation
-  - name: "百度-中国广东东莞-移动"
+  # 183.240.98.84  广东省广州市 移通
+  - name: "百度-中国广东广州-未知"
     type: http
     server: 183.240.98.84
     port: 443
@@ -172,14 +172,14 @@ proxy-groups:
       # >>>BAIDU-CDN-AUTOTEST-START>>>
       - 百度-中国河北保定-联通
       - 百度-中国河北保定-联通-2
-      - 百度-中国广东广州-未知
+      - 百度-中国广东广州-电信
       - 百度-中国江苏南京-联通
       - 百度-中国江苏苏州-联通
       - 百度-中国广东广州-联通
       - 百度-中国广东广州-联通-2
       - 百度-中国江苏南京-电信
       - 百度-中国江苏南京-电信-2
-      - 百度-中国广东东莞-移动
+      - 百度-中国广东广州-未知
       - 百度-中国北京-电信
       - 百度-中国北京-电信-2
       - 百度-中国北京-电信-3
@@ -195,14 +195,14 @@ proxy-groups:
       # >>>BAIDU-CDN-GROUP-START>>>
       - 百度-中国河北保定-联通
       - 百度-中国河北保定-联通-2
-      - 百度-中国广东广州-未知
+      - 百度-中国广东广州-电信
       - 百度-中国江苏南京-联通
       - 百度-中国江苏苏州-联通
       - 百度-中国广东广州-联通
       - 百度-中国广东广州-联通-2
       - 百度-中国江苏南京-电信
       - 百度-中国江苏南京-电信-2
-      - 百度-中国广东东莞-移动
+      - 百度-中国广东广州-未知
       - 百度-中国北京-电信
       - 百度-中国北京-电信-2
       - 百度-中国北京-电信-3
