@@ -58,7 +58,7 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 157.0.146.158  江苏省苏州市 联通
+  # 157.0.146.158  China · Jiangsu Sheng · Suzhou · China Unicom
   - name: "百度-中国江苏苏州-联通"
     type: http
     server: 157.0.146.158
@@ -118,7 +118,7 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 220.181.111.189  北京市 电信
+  # 220.181.111.189  China · Beijing · Beijing · IDC, China Telecommunications Corporation
   - name: "百度-中国北京-电信"
     type: http
     server: 220.181.111.189
@@ -128,8 +128,8 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 220.181.33.174  北京市 百度蜘蛛
-  - name: "百度-中国北京-未知"
+  # 220.181.33.174  China · Beijing · Beijing · IDC, China Telecommunications Corporation
+  - name: "百度-中国北京-电信-2"
     type: http
     server: 220.181.33.174
     port: 443
@@ -138,8 +138,8 @@ proxies:
       Proxy-Connection: "Keep-Alive"
       X-T5-Auth: "1951164069"
       User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
-  # 220.181.7.1  北京市 百度蜘蛛
-  - name: "百度-中国北京-未知-2"
+  # 220.181.7.1  China · Beijing · Beijing · IDC, China Telecommunications Corporation
+  - name: "百度-中国北京-电信-3"
     type: http
     server: 220.181.7.1
     port: 443
@@ -181,8 +181,8 @@ proxy-groups:
       - 百度-中国江苏南京-电信-2
       - 百度-中国广东广州-未知
       - 百度-中国北京-电信
-      - 百度-中国北京-未知
-      - 百度-中国北京-未知-2
+      - 百度-中国北京-电信-2
+      - 百度-中国北京-电信-3
       - 百度-中国江苏南京-移动
 # <<<BAIDU-CDN-AUTOTEST-END<<<
   # 手动选择组（select）：可手动指定任意节点，也可选“自动测速”走自动模式
@@ -204,8 +204,8 @@ proxy-groups:
       - 百度-中国江苏南京-电信-2
       - 百度-中国广东广州-未知
       - 百度-中国北京-电信
-      - 百度-中国北京-未知
-      - 百度-中国北京-未知-2
+      - 百度-中国北京-电信-2
+      - 百度-中国北京-电信-3
       - 百度-中国江苏南京-移动
 # <<<BAIDU-CDN-GROUP-END<<<
 
